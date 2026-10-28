@@ -1,7 +1,7 @@
 # 💧 Drink Water Reminder
 
-A calm, installable, offline-first water reminder. Add it to your home screen, allow notifications once,
-and it nudges you at your chosen interval — no account, no server, no tracking.
+A friendly, installable, offline water tracker. Drink a glass, watch your buddy fill up, and get nudged
+at your chosen interval — no account, no server, no tracking.
 
 **Live app:** https://e0raj.github.io/drink-water-reminder/
 
@@ -9,11 +9,15 @@ and it nudges you at your chosen interval — no account, no server, no tracking
 
 ## What it does
 
-- **Installable PWA** — "Add to Home Screen" / "Install app", opens full-screen with its own icon.
+- **Installable PWA** — Android shows an Install button right in the header; iPhone gets the
+  "Share → Add to Home Screen" hint. Opens full-screen with its own icon.
 - **One permission prompt** — tap *Allow notifications* once, the reminder schedule starts immediately.
 - **Reminders that respect your day** — pick an interval (30 min → 2 hours) and a waking window
   (default 08:00–22:00). Nothing buzzes at night.
-- **Daily goal + streak tracking** — a friendly water drop that grows as you drink, plus a 7-day chart, all stored locally.
+- **A buddy, not a bar chart** — a cartoon water drop sits in the progress ring, blinks, and grows as
+  you drink. Streak chip, 7-day chart and daily average below.
+- **Its own settings page** — reminders, waking hours, goal, glass size, vibrate/sound, install and data
+  controls each get a proper screen instead of a hidden accordion.
 - **Quick logging** — one tap for a glass, plus 100 ml / 500 ml buttons, undo, and a
   "Drank it 💧" action right on the notification.
 - **Works offline** — the whole app is cached by a service worker, so it opens instantly with no network.
@@ -54,7 +58,9 @@ All asset paths are relative, so it works from any sub-path — no build step, n
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | The whole UI, styles and app logic (no dependencies) |
+| `index.html` | Today screen — ring, drop, quick logging, 7-day chart |
+| `settings.html` | Settings page — notifications, reminders, goal, feedback, data |
+| `app.js` | Shared core: storage, schedule math, streak/week helpers |
 | `manifest.webmanifest` | Name, icons, colours, `display: standalone`, shortcut |
 | `sw.js` | Offline cache, notification display, notification-click actions, background checks |
 | `icons/` | 192/512 icons, maskable icon, iOS touch icon, notification badge |

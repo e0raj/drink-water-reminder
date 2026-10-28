@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Settings — Water</title>
+<meta name="theme-color" content="#f6f9fd" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Water" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<style>
+  :root{
+    --bg:#f6f9fd;
+    --card:#ffffff;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --faint:#94a3b8;
+    --line:#e6ecf5;
+    --blue:#2563eb;
+    --blue-mid:#3b82f6;
+    --blue-soft:#eaf2ff;
+    --radius:22px;
+    --shadow:0 10px 30px -18px rgba(30,64,175,.45);
+    --danger:#e11d48;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220;
+      --card:#121c2d;
+      --ink:#eaf1fb;
+      --muted:#8fa3bf;
+      --faint:#6b7f9c;
+      --line:#1e2b40;
+      --blue:#3b82f6;
+      --blue-mid:#60a5fa;
+      --blue-soft:#15243b;
+      --shadow:0 12px 32px -20px rgba(0,0,0,.9);
+      --danger:#fb7185;
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:var(--bg)}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:calc(env(safe-area-inset-top) + 18px) 20px calc(env(safe-area-inset-bottom) + 28px);
+  }
+  .wrap{max-width:440px;margin:0 auto}
+
+  header{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .back{
+    width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+    display:grid;place-items:center;color:var(--ink);flex:0 0 auto;text-decoration:none;
+  }
+  .back svg{width:19px;height:19px}
+  h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.5px}
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:6px 16px;margin-bottom:14px;
+  }
+  .card > .hd{
+    font-size:11.5px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;
+    color:var(--faint);padding:15px 0 4px;
+  }
+  .row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0}
+  .row + .row{border-top:1px solid var(--line)}
+  .row .lbl{font-size:14.5px;font-weight:700}
+  .row .sub{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.45}
+  .row .val{font-size:14px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+
+  .block{padding:13px 0}
+  .block + .block{border-top:1px solid var(--line)}
+  .block .fl{
+    font-size:11.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;
+    color:var(--faint);margin-bottom:10px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    border:1.5px solid var(--line);border-radius:12px;padding:9px 13px;font-size:13px;
+    color:var(--muted);background:transparent;font-weight:700;
+  }
+  .chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+
+  button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;touch-action:manipulation}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--blue);color:#fff;border-radius:14px;padding:12px 17px;
+    font-size:14px;font-weight:800;
+  }
+  .btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+  .btn.danger{background:transparent;border:1.5px solid var(--line);color:var(--danger)}
+  .btn.blockbtn{display:flex;width:100%}
+  .btn:active{transform:scale(.99)}
+  .btn[disabled]{opacity:.45}
+
+  .times{display:flex;align-items:center;gap:9px}
+  input[type="time"]{
+    width:100%;background:transparent;border:1.5px solid var(--line);border-radius:12px;
+    color:var(--ink);padding:11px 12px;font:inherit;font-size:14.5px;font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  input:focus-visible,.chip:focus-visible,.btn:focus-visible,.back:focus-visible{
+    outline:2px solid var(--blue);outline-offset:2px;
+  }
+
+  .switch{position:relative;width:46px;height:27px;flex:0 0 auto}
+  .switch input{position:absolute;inset:0;opacity:0;margin:0;width:100%;height:100%;cursor:pointer}
+  .switch i{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:background .18s ease}
+  .switch i::after{
+    content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.25);
+    transition:transform .18s ease;
+  }
+  .switch input:checked + i{background:var(--blue)}
+  .switch input:checked + i::after{transform:translateX(19px)}
+
+  .note{font-size:12px;color:var(--faint);line-height:1.6;padding:0 2px 14px}
+  .note a{color:var(--blue);font-weight:700;text-decoration:none}
+
+  .status-pill{
+    display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;
+    padding:7px 12px;border-radius:999px;background:var(--blue-soft);color:var(--blue);
+  }
+  .status-pill .d{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  .toast{
+    position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translate(-50%,14px);
+    background:var(--ink);color:var(--bg);padding:12px 19px;border-radius:14px;
+    font-size:13px;font-weight:700;opacity:0;pointer-events:none;
+    transition:opacity .22s ease,transform .22s ease;z-index:60;max-width:88vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .hidden{display:none !important}
+  @media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a class="back" href="index.html" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1>Settings</h1>
+  </header>
+
+  <!-- notifications -->
+  <section class="card">
+    <div class="hd">Notifications</div>
+    <div class="row">
+      <div>
+        <div class="lbl" id="permLabel">Checking…</div>
+        <div class="sub" id="permSub">Reminders need notification permission.</div>
+      </div>
+      <span class="status-pill" id="permPill"><span class="d"></span><span id="permPillText">…</span></span>
+    </div>
+    <div class="row" style="border-top:1px solid var(--line)">
+      <div style="display:flex;gap:8px;width:100%">
+        <button class="btn" id="enableBtn" style="flex:1">Allow notifications</button>
+        <button class="btn ghost" id="testBtn">Send test</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- reminders -->
+  <section class="card">
+    <div class="hd">Reminders</div>
+    <div class="block" style="padding-top:6px">
+      <div class="fl">Remind me every</div>
+      <div class="chips" id="intervalChips">
+        <button class="chip" data-min="30">30 min</button>
+        <button class="chip" data-min="45">45 min</button>
+        <button class="chip" data-min="60">1 hour</button>
+        <button class="chip" data-min="90">1.5 hours</button>
+        <button class="chip" data-min="120">2 hours</button>
+      </div>
+    </div>
+    <div class="block">
+      <div class="fl">Only between</div>
+      <div class="times">
+        <input type="time" id="startTime" value="08:00" aria-label="Start time" />
+        <span style="color:var(--faint);font-size:13px">to</span>
+        <input type="time" id="endTime" value="22:00" aria-label="End time" />
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="lbl">Next reminder</div>
+        <div class="sub" id="nextSub">Reminders are off</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- goal -->
+  <section class="card">
+    <div class="hd">Goal</div>
+    <div class="block" style="padding-top:6px">
+      <div class="fl">Daily goal</div>
+      <div class="chips" id="goalChips">
+        <button class="chip" data-goal="1500">1.5 L</button>
+        <button class="chip" data-goal="2000">2 L</button>
+        <button class="chip" data-goal="2500">2.5 L</button>
+        <button class="chip" data-goal="3000">3 L</button>
+      </div>
+    </div>
+    <div class="block">
+      <div class="fl">One glass is</div>
+      <div class="chips" id="glassChips">
+        <button class="chip" data-glass="200">200 ml</button>
+        <button class="chip" data-glass="250">250 ml</button>
+        <button class="chip" data-glass="300">300 ml</button>
+        <button class="chip" data-glass="500">500 ml</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- feel -->
+  <section class="card">
+    <div class="hd">Feedback</div>
+    <div class="row">
+      <div>
+        <div class="lbl">Vibrate</div>
+        <div class="sub">Buzz with each reminder</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="vibrateToggle" checked /><i></i></label>
+    </div>
+    <div class="row">
+      <div>
+        <div class="lbl">Sound</div>
+        <div class="sub">Soft chime when the app is open</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="soundToggle" checked /><i></i></label>
+    </div>
+  </section>
+
+  <!-- install -->
+  <section class="card hidden" id="installCard">
+    <div class="hd">App</div>
+    <div class="row">
+      <div>
+        <div class="lbl" id="installTitle">Install as an app</div>
+        <div class="sub" id="installSub">Add it to your home screen.</div>
+      </div>
+      <button class="btn hidden" id="installBtn">Install</button>
+    </div>
+  </section>
+
+  <!-- data -->
+  <section class="card">
+    <div class="hd">Data</div>
+    <div class="row">
+      <div>
+        <div class="lbl">Today's log</div>
+        <div class="sub" id="todaySub">0 ml so far</div>
+      </div>
+      <button class="btn ghost" id="resetToday">Reset</button>
+    </div>
+    <div class="row">
+      <div>
+        <div class="lbl">Everything</div>
+        <div class="sub">Settings and history on this device</div>
+      </div>
+      <button class="btn danger" id="resetAll">Clear</button>
+    </div>
+  </section>
+
+  <p class="note">
+    Everything stays on this device — no account, no server. Reminders keep firing while the app is
+    open in the background; Chrome on Android can also wake it every ~15 minutes when installed.
+    iOS does not allow background wake-ups for web apps.<br />
+    <span id="version">v1.3.0</span>
+  </p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+(() => {
+  "use strict";
+  const C = window.WaterCore;
+  const $ = (id) => document.getElementById(id);
+  let state = C.load();
+
+  const fmt = (n) => Number(n).toLocaleString("en-IN");
+
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.classList.remove("show"), 1900);
+  }
+
+  /* ---------- permission block ---------- */
+  function renderPermission() {
+    const supported = "Notification" in window;
+    const perm = supported ? Notification.permission : "unsupported";
+    const label = $("permLabel"), sub = $("permSub"), pill = $("permPill"), pillTxt = $("permPillText");
+
+    if (!supported) {
+      label.textContent = "Not supported";
+      sub.textContent = "This browser can't show notifications.";
+      pillTxt.textContent = "—";
+      $("enableBtn").disabled = true;
+      return;
+    }
+    if (perm === "granted" && state.settings.enabled) {
+      label.textContent = "Reminders are on";
+      sub.textContent = "We'll nudge you inside your waking hours.";
+      pillTxt.textContent = "On";
+      $("enableBtn").textContent = "Restart schedule";
+    } else if (perm === "granted") {
+      label.textContent = "Permission allowed";
+      sub.textContent = "Start the schedule when you're ready.";
+      pillTxt.textContent = "Ready";
+      $("enableBtn").textContent = "Start reminders";
+    } else if (perm === "denied") {
+      label.textContent = "Blocked";
+      sub.textContent = "Allow notifications for this site in your browser settings, then reload.";
+      pillTxt.textContent = "Blocked";
+      $("enableBtn").textContent = "How to fix";
+    } else {
+      label.textContent = "Notifications off";
+      sub.textContent = "Allow once and reminders start automatically.";
+      pillTxt.textContent = "Off";
+      $("enableBtn").textContent = "Allow notifications";
+    }
+  }
+
+  /* ---------- render everything ---------- */
+  function render() {
+    const s = state.settings;
+
+    document.querySelectorAll("#intervalChips .chip").forEach(b =>
+      b.setAttribute("aria-pressed", Number(b.dataset.min) === s.intervalMin ? "true" : "false"));
+    document.querySelectorAll("#goalChips .chip").forEach(b =>
+      b.setAttribute("aria-pressed", Number(b.dataset.goal) === s.goalMl ? "true" : "false"));
+    document.querySelectorAll("#glassChips .chip").forEach(b =>
+      b.setAttribute("aria-pressed", Number(b.dataset.glass) === s.glassMl ? "true" : "false"));
+
+    $("startTime").value = C.minToTime(s.startMin);
+    $("endTime").value = C.minToTime(s.endMin);
+    $("vibrateToggle").checked = !!s.vibrate;
+    $("soundToggle").checked = !!s.sound;
+    $("todaySub").textContent = fmt(state.mlToday) + " of " + fmt(s.goalMl) + " ml";
+
+    $("nextSub").textContent = (s.enabled && s.nextAt)
+      ? C.fmtClock(s.nextAt) + " · every " + s.intervalMin + " min"
+      : "Reminders are off";
+
+    renderPermission();
+  }
+
+  function persist(remindToo) {
+    C.save(state);
+    if (remindToo && state.settings.enabled) C.scheduleNext(state, Date.now());
+    render();
+  }
+
+  /* ---------- permission actions ---------- */
+  $("enableBtn").addEventListener("click", async () => {
+    if (!("Notification" in window)) { toast("Notifications not supported"); return; }
+    if (Notification.permission === "denied") {
+      toast("Allow notifications in browser settings, then reload");
+      return;
+    }
+    let perm = Notification.permission;
+    if (perm !== "granted") perm = await Notification.requestPermission();
+    if (perm !== "granted") { toast("Notifications not allowed"); renderPermission(); return; }
+
+    state.settings.enabled = true;
+    C.scheduleNext(state, Date.now());
+    render();
+    toast("Reminders on · first at " + C.fmtClock(state.settings.nextAt));
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      reg.showNotification("Reminders are on", {
+        body: "Every " + state.settings.intervalMin + " minutes, between " +
+              C.minToTime(state.settings.startMin) + " and " + C.minToTime(state.settings.endMin) + ".",
+        icon: "icons/icon-192.png",
+        badge: "icons/badge-72.png",
+        tag: "water-setup"
+      });
+    } catch (e) { /* ignore */ }
+  });
+
+  $("testBtn").addEventListener("click", async () => {
+    if (!("Notification" in window)) { toast("Notifications not supported"); return; }
+    if (Notification.permission !== "granted") {
+      const p = await Notification.requestPermission();
+      if (p !== "granted") { toast("Allow notifications first"); return; }
+    }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      reg.showNotification("Test reminder", {
+        body: "This is what a water reminder looks like.",
+        icon: "icons/icon-192.png",
+        badge: "icons/badge-72.png",
+        tag: "water-test",
+        actions: [{ action: "drank", title: "Drank it" }, { action: "snooze", title: "Snooze 10 min" }]
+      });
+    } catch (e) { toast("Could not send notification"); return; }
+    toast("Test sent");
+  });
+
+  /* ---------- settings ---------- */
+  document.querySelectorAll("#intervalChips .chip").forEach(b => b.addEventListener("click", () => {
+    state.settings.intervalMin = Number(b.dataset.min);
+    persist(true);
+  }));
+  document.querySelectorAll("#goalChips .chip").forEach(b => b.addEventListener("click", () => {
+    state.settings.goalMl = Number(b.dataset.goal);
+    persist(false);
+  }));
+  document.querySelectorAll("#glassChips .chip").forEach(b => b.addEventListener("click", () => {
+    state.settings.glassMl = Number(b.dataset.glass);
+    persist(false);
+  }));
+
+  ["startTime", "endTime"].forEach(id => $(id).addEventListener("change", () => {
+    state.settings.startMin = C.timeToMin($("startTime").value);
+    state.settings.endMin = C.timeToMin($("endTime").value);
+    persist(true);
+  }));
+
+  $("vibrateToggle").addEventListener("change", e => {
+    state.settings.vibrate = e.target.checked;
+    persist(false);
+    if (e.target.checked && navigator.vibrate) navigator.vibrate(50);
+  });
+  $("soundToggle").addEventListener("change", e => {
+    state.settings.sound = e.target.checked;
+    persist(false);
+  });
+
+  /* ---------- data ---------- */
+  $("resetToday").addEventListener("click", () => {
+    state.lastAdd = null;
+    C.setToday(state, 0);
+    render();
+    toast("Today's log cleared");
+  });
+
+  $("resetAll").addEventListener("click", () => {
+    if (!confirm("Clear all water history and settings on this device?")) return;
+    localStorage.removeItem(C.STORE_KEY);
+    state = C.load();
+    render();
+    toast("Everything cleared");
+  });
+
+  /* ---------- install ---------- */
+  let deferredPrompt = null;
+  const isStandalone = () =>
+    window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $("installCard").classList.remove("hidden");
+    $("installTitle").textContent = "Install as an app";
+    $("installSub").textContent = "Add it to your home screen.";
+    $("installBtn").classList.remove("hidden");
+  });
+
+  $("installBtn").addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (outcome === "accepted") $("installCard").classList.add("hidden");
+  });
+
+  if (!isStandalone() && isIOS()) {
+    $("installCard").classList.remove("hidden");
+    $("installTitle").textContent = "Add to Home Screen";
+    $("installSub").textContent = "Tap Share in Safari, then “Add to Home Screen”.";
+  }
+
+  /* ---------- sw ---------- */
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(() => {});
+  }
+
+  render();
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") { state = C.load(); render(); }
+  });
+})();
+</script>
+</body>
+</html>

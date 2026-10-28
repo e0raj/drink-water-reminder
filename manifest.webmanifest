@@ -1,7 +1,7 @@
 {
   "name": "Drink Water Reminder",
   "short_name": "Water",
-  "description": "A simple, offline water reminder. Get a nudge, drink a glass, build the habit.",
+  "description": "A friendly water tracker. Drink a glass, watch your buddy grow. Works offline.",
   "id": "/drink-water-reminder/",
   "start_url": "./",
   "scope": "./",
@@ -11,8 +11,8 @@
     "minimal-ui"
   ],
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#f6f9fd",
+  "theme_color": "#f6f9fd",
   "lang": "en",
   "dir": "ltr",
   "categories": [

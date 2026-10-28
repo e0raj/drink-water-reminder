@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Drink Water Reminder</title>
-<meta name="description" content="A simple, offline water reminder. Get a nudge, drink a glass, build the habit." />
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#0b0b0b" media="(prefers-color-scheme: dark)" />
+<title>Water — Today</title>
+<meta name="description" content="A friendly water tracker. Drink a glass, watch your buddy grow." />
+<meta name="theme-color" content="#f6f9fd" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -16,25 +16,35 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 <style>
   :root{
-    --bg:#ffffff;
-    --ink:#0a0a0a;
-    --muted:#767676;
-    --faint:#9a9a9a;
-    --line:#e4e4e4;
-    --soft:#f7f7f7;
-    --fill:#0a0a0a;
-    --onfill:#ffffff;
+    --bg:#f6f9fd;
+    --card:#ffffff;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --faint:#94a3b8;
+    --line:#e6ecf5;
+    --blue:#2563eb;
+    --blue-mid:#3b82f6;
+    --blue-soft:#eaf2ff;
+    --blue-ink:#1d4ed8;
+    --track:#e6eefb;
+    --cheek:#fb7185;
+    --radius:22px;
+    --shadow:0 10px 30px -18px rgba(30,64,175,.45);
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#0b0b0b;
-      --ink:#f4f4f4;
-      --muted:#8d8d8d;
-      --faint:#6a6a6a;
-      --line:#242424;
-      --soft:#141414;
-      --fill:#f4f4f4;
-      --onfill:#0b0b0b;
+      --bg:#0b1220;
+      --card:#121c2d;
+      --ink:#eaf1fb;
+      --muted:#8fa3bf;
+      --faint:#6b7f9c;
+      --line:#1e2b40;
+      --blue:#3b82f6;
+      --blue-mid:#60a5fa;
+      --blue-soft:#15243b;
+      --blue-ink:#93c5fd;
+      --track:#1b2942;
+      --shadow:0 12px 32px -20px rgba(0,0,0,.9);
     }
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -44,132 +54,116 @@
     background:var(--bg);
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    font-size:15px;
-    line-height:1.5;
     -webkit-font-smoothing:antialiased;
-    padding:calc(env(safe-area-inset-top) + 16px) 20px calc(env(safe-area-inset-bottom) + 30px);
+    padding:calc(env(safe-area-inset-top) + 18px) 20px calc(env(safe-area-inset-bottom) + 28px);
   }
-  .wrap{max-width:420px;margin:0 auto}
+  .wrap{max-width:440px;margin:0 auto}
 
-  /* status, top right only */
-  .topbar{display:flex;justify-content:flex-end;align-items:center;gap:7px;
-    font-size:12.5px;color:var(--muted);min-height:18px}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:0 0 auto;transition:background .2s ease}
-  .dot.on{background:var(--ink)}
-  .dot.off{background:transparent;border:1.5px solid var(--faint)}
-
-  /* cartoon drop */
-  .stage{position:relative;display:flex;align-items:flex-end;justify-content:center;
-    height:184px;margin:6px 0 2px}
-  .drop{width:124px;height:160px;overflow:visible;color:var(--ink);display:block}
-  #dropG{transform-origin:50% 100%;transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
-  .stage.pop .drop{animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
-  @keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.13)}70%{transform:scale(.97)}100%{transform:scale(1)}}
-  .stage::after{
-    content:"";position:absolute;bottom:2px;width:64px;height:64px;border-radius:50%;
-    border:2px solid var(--line);opacity:0;pointer-events:none;
+  /* ---------- header ---------- */
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-1px;flex:1}
+  .chip-streak{
+    display:inline-flex;align-items:center;gap:5px;background:#fff5e6;color:#b45309;
+    border:1px solid #ffe4c2;font-size:12.5px;font-weight:700;padding:7px 11px;border-radius:999px;
+    white-space:nowrap;
   }
-  .stage.pop::after{animation:splash .65s ease-out}
-  @keyframes splash{0%{transform:scale(.45);opacity:.85}100%{transform:scale(1.9);opacity:0}}
+  @media (prefers-color-scheme: dark){
+    .chip-streak{background:#2a1f10;color:#fbbf24;border-color:#3d2c15}
+  }
+  .icon-btn{
+    width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+    display:grid;place-items:center;color:var(--muted);flex:0 0 auto;
+  }
+  .icon-btn svg{width:19px;height:19px}
+  .sub{margin:0 0 2px;font-size:13.5px;color:var(--muted)}
+
+  /* ---------- install row ---------- */
+  .install-row{
+    display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:12px 14px;margin-top:14px;box-shadow:var(--shadow);
+  }
+  .install-row .txt{flex:1;min-width:0}
+  .install-row strong{display:block;font-size:13.5px;font-weight:700}
+  .install-row p{margin:2px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
+  .install-row .go{
+    border:none;background:var(--blue);color:#fff;font-weight:700;font-size:13px;
+    padding:10px 15px;border-radius:12px;flex:0 0 auto;
+  }
+  .share-ico{width:34px;height:34px;border-radius:10px;background:var(--blue-soft);color:var(--blue);
+    display:grid;place-items:center;flex:0 0 auto}
+  .share-ico svg{width:17px;height:17px}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;width:min(292px,80vw);aspect-ratio:1;margin:22px auto 4px}
+  .ring{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+  .ring .trk{fill:none;stroke:var(--track);stroke-width:13}
+  .ring .bar{
+    fill:none;stroke:var(--blue);stroke-width:13;stroke-linecap:round;
+    transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1);
+  }
+  .pal{
+    position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
+  }
+  .pal svg{width:47%;height:auto;transform-origin:50% 92%;
+    transition:transform .6s cubic-bezier(.34,1.56,.64,1);}
+  .hero.pop .pal svg{animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.1)}70%{transform:scale(.98)}100%{transform:scale(1)}}
   .eye{transform-box:fill-box;transform-origin:center;animation:blink 5.5s infinite}
-  @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%,98%{transform:scaleY(.12)}}
+  @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%,98%{transform:scaleY(.1)}}
 
-  /* numbers */
-  .fig{display:flex;align-items:baseline;justify-content:center;gap:7px;
-    font-variant-numeric:tabular-nums;margin-top:6px}
-  .fig .num{font-size:46px;font-weight:600;letter-spacing:-2px;line-height:1}
-  .fig .of{font-size:15px;color:var(--muted)}
-  .meta{display:flex;justify-content:center;align-items:center;gap:8px;
-    font-size:13px;color:var(--muted);margin-top:8px}
-  .meta .sep{color:var(--line)}
-
-  /* next reminder */
-  .next{
-    border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;font-size:13.5px;
-    color:var(--muted);margin:22px 0 12px;display:flex;justify-content:space-between;gap:12px;
+  /* ---------- numbers ---------- */
+  .fig{text-align:center;margin-top:10px;font-variant-numeric:tabular-nums}
+  .fig .num{font-size:32px;font-weight:800;letter-spacing:-.8px}
+  .fig .of{font-size:16px;color:var(--muted);font-weight:600}
+  .statusline{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    margin-top:7px;font-size:14px;font-weight:700;color:var(--blue);
   }
-  .next b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+  .statusline svg{width:15px;height:15px;flex:0 0 auto}
 
-  /* buttons */
+  /* ---------- buttons ---------- */
   button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;touch-action:manipulation}
-  .btn{
-    display:block;width:100%;text-align:center;padding:15px 12px;border-radius:16px;
-    border:1.5px solid var(--line);background:transparent;color:var(--ink);
-    font-size:14.5px;font-weight:600;transition:background .15s ease,transform .1s ease;
+  .add{
+    display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+    background:var(--blue);color:#fff;border-radius:18px;padding:17px;
+    font-size:16px;font-weight:800;letter-spacing:-.2px;margin-top:22px;
+    box-shadow:0 14px 26px -14px rgba(37,99,235,.65);
+    transition:transform .1s ease,background .15s ease;
   }
-  .btn:active{transform:scale(.98)}
-  .btn.solid{background:var(--fill);color:var(--onfill);border-color:var(--fill);font-weight:700}
-  .btn.sm{padding:11px 15px;font-size:13.5px;width:auto;border-radius:14px}
-  .row{display:flex;gap:8px}
-  .row .btn{flex:1}
-  .adds{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
-  .adds .btn.solid span{color:inherit;opacity:.65;font-weight:600;margin-left:7px}
+  .add:active{transform:scale(.985)}
+  .add .amt{font-weight:600;opacity:.85;font-size:14.5px}
+  .quick{display:flex;gap:9px;margin-top:9px}
+  .quick button{
+    flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:14px 8px;font-size:14px;font-weight:700;color:var(--ink);
+    box-shadow:var(--shadow);transition:transform .1s ease;
+  }
+  .quick button:active{transform:scale(.98)}
+  .quick button:disabled{opacity:.45;box-shadow:none}
+  .nextline{
+    text-align:center;font-size:12.5px;color:var(--muted);margin-top:14px;
+  }
+  .nextline b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+  .nextline a{color:var(--blue);font-weight:700;text-decoration:none}
 
-  /* notices */
-  .notice{border:1.5px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;background:var(--soft)}
-  .notice p{margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.5}
-  .notice .row{gap:8px}
-  .notice.flat{background:transparent}
-  .spread{display:flex;align-items:center;justify-content:space-between;gap:14px}
-  .spread strong{display:block;font-size:13.5px;font-weight:700}
-  .spread p{margin:2px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
-
-  /* week */
-  .week{margin:26px 0 0}
-  .label{font-size:11.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--faint);margin-bottom:12px;font-weight:600}
+  /* ---------- week ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:16px 16px 14px;margin-top:18px}
+  .card .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .card .hd h2{margin:0;font-size:13px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  .card .hd span{font-size:12px;color:var(--faint);font-weight:600}
   .bars{display:flex;gap:7px;align-items:flex-end}
   .day{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
-  .day .track-b{height:46px;width:100%;display:flex;align-items:flex-end}
-  .day .b{width:100%;background:var(--line);border-radius:6px;transition:height .5s cubic-bezier(.34,1.4,.64,1)}
-  .day.has .b{background:var(--ink)}
-  .day .d{font-size:10.5px;color:var(--faint);letter-spacing:.3px}
-  .day.cur .d{color:var(--ink);font-weight:700}
-
-  /* settings */
-  details{border-top:1.5px solid var(--line);margin-top:28px}
-  summary{
-    list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
-    padding:19px 2px;font-size:14.5px;font-weight:700;
-  }
-  summary::-webkit-details-marker{display:none}
-  summary .plus{color:var(--muted);font-weight:400;font-size:20px;line-height:1;transition:transform .2s ease}
-  details[open] summary .plus{transform:rotate(45deg)}
-  .set{display:flex;flex-direction:column;gap:22px;padding:2px 2px 6px}
-  .field > .fl{display:block;font-size:11.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);margin-bottom:10px;font-weight:600}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{
-    border:1.5px solid var(--line);border-radius:12px;padding:9px 13px;font-size:12.5px;
-    color:var(--muted);background:transparent;font-weight:600;
-  }
-  .chip[aria-pressed="true"]{background:var(--fill);border-color:var(--fill);color:var(--onfill)}
-  input[type="time"]{
-    width:100%;background:transparent;border:1.5px solid var(--line);border-radius:12px;
-    color:var(--ink);padding:11px 12px;font:inherit;font-size:14px;font-variant-numeric:tabular-nums;
-  }
-  input:focus-visible,.chip:focus-visible,.btn:focus-visible,summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-  .times{display:flex;align-items:center;gap:9px}
-  .times span{font-size:13px;color:var(--faint)}
-  .toggle{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:2px 0}
-  .toggle .tl{font-size:14px;font-weight:600}
-  .toggle .ts{font-size:12px;color:var(--muted);margin-top:1px}
-  .switch{position:relative;width:44px;height:26px;flex:0 0 auto}
-  .switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%}
-  .switch i{position:absolute;inset:0;border-radius:99px;border:1.5px solid var(--line);transition:background .18s ease,border-color .18s ease}
-  .switch i::after{
-    content:"";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;
-    background:var(--muted);transition:transform .18s ease,background .18s ease;
-  }
-  .switch input:checked + i{background:var(--fill);border-color:var(--fill)}
-  .switch input:checked + i::after{transform:translateX(18px);background:var(--onfill)}
-  .hint{font-size:12px;color:var(--faint);line-height:1.55}
-  .divider{height:1px;background:var(--line);margin:2px 0}
-
-  footer{margin-top:30px;padding-top:18px;border-top:1.5px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.7}
+  .day .tb{height:52px;width:100%;display:flex;align-items:flex-end}
+  .day .b{width:100%;background:var(--track);border-radius:7px;transition:height .5s cubic-bezier(.34,1.4,.64,1)}
+  .day.has .b{background:linear-gradient(180deg,var(--blue-mid),var(--blue))}
+  .day .d{font-size:10.5px;color:var(--faint);font-weight:600}
+  .day.cur .d{color:var(--blue)}
 
   .toast{
     position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translate(-50%,14px);
-    background:var(--fill);color:var(--onfill);padding:12px 19px;border-radius:14px;
-    font-size:13px;font-weight:600;opacity:0;pointer-events:none;
+    background:var(--ink);color:var(--bg);padding:12px 19px;border-radius:14px;
+    font-size:13px;font-weight:700;opacity:0;pointer-events:none;
     transition:opacity .22s ease,transform .22s ease;z-index:60;max-width:88vw;text-align:center;
   }
   .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -180,272 +174,112 @@
 <body>
 <div class="wrap">
 
-  <div class="topbar"><span class="dot" id="statusDot"></span><span id="statusText">Checking</span></div>
+  <header class="top">
+    <h1>Today</h1>
+    <span class="chip-streak hidden" id="streakChip">🔥 <span id="streakNum">0</span> day streak</span>
+    <a class="icon-btn" href="settings.html" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 15.1 4.7a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.24.6.82 1 1.56 1.03H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1.03Z"/>
+      </svg>
+    </a>
+  </header>
+  <p class="sub" id="greeting">Let's get you hydrated</p>
 
-  <div class="stage" id="stage">
-    <svg class="drop" viewBox="0 0 100 132" aria-hidden="true">
-      <g id="dropG">
-        <path id="dropPath" d="M50 5C50 5 88 50 88 82a38 38 0 0 1-76 0C12 50 50 5 50 5Z"
-              fill="currentColor" />
-        <ellipse cx="35" cy="55" rx="5.5" ry="10.5" fill="var(--bg)" opacity=".5"
-                 transform="rotate(-22 35 55)" />
-        <g fill="var(--bg)">
-          <ellipse class="eye" cx="38" cy="74" rx="4.6" ry="5.6" />
-          <ellipse class="eye" cx="62" cy="74" rx="4.6" ry="5.6" />
-        </g>
-        <path d="M42 90q8 7 16 0" fill="none" stroke="var(--bg)" stroke-width="4"
-              stroke-linecap="round" />
-      </g>
+  <!-- install: android gets a button, ios gets the share hint -->
+  <div class="install-row hidden" id="installRow">
+    <div class="share-ico" id="installIcon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/>
+      </svg>
+    </div>
+    <div class="txt">
+      <strong id="installTitle">Add to Home Screen</strong>
+      <p id="installSub">Tap Share, then Add to Home Screen.</p>
+    </div>
+    <button class="go hidden" id="installBtn">Install</button>
+  </div>
+
+  <div class="hero" id="hero">
+    <svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
+      <circle class="trk" cx="120" cy="120" r="104"/>
+      <circle class="bar" id="ringBar" cx="120" cy="120" r="104"
+              stroke-dasharray="653.45" stroke-dashoffset="653.45"/>
     </svg>
+
+    <div class="pal">
+      <svg viewBox="0 0 120 140" aria-hidden="true">
+        <defs>
+          <linearGradient id="dropGrad" x1="0.15" y1="0" x2="0.85" y2="1">
+            <stop offset="0" stop-color="#a5d0ff"/>
+            <stop offset="0.42" stop-color="#3b82f6"/>
+            <stop offset="1" stop-color="#1d4ed8"/>
+          </linearGradient>
+        </defs>
+        <path d="M60 6C60 6 104 56 104 92a44 44 0 0 1-88 0C16 56 60 6 60 6Z" fill="url(#dropGrad)"/>
+        <ellipse cx="42" cy="62" rx="8.5" ry="17" transform="rotate(-20 42 62)" fill="#fff" opacity=".5"/>
+        <ellipse class="eye" cx="47" cy="86" rx="5.4" ry="6.4" fill="#0b1220"/>
+        <ellipse class="eye" cx="73" cy="86" rx="5.4" ry="6.4" fill="#0b1220"/>
+        <circle cx="49" cy="83.5" r="1.9" fill="#fff"/>
+        <circle cx="75" cy="83.5" r="1.9" fill="#fff"/>
+        <ellipse cx="34" cy="99" rx="6" ry="4.2" fill="#fb7185" opacity=".5"/>
+        <ellipse cx="86" cy="99" rx="6" ry="4.2" fill="#fb7185" opacity=".5"/>
+        <path d="M52 100q8 7 16 0" fill="none" stroke="#0b1220" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </div>
   </div>
 
   <div class="fig">
     <span class="num" id="mlNow">0</span>
-    <span class="of">/ <span id="goalText">2000</span> ml</span>
-  </div>
-  <div class="meta">
-    <span id="glassText">0 of 8 glasses</span>
-    <span class="sep">·</span>
-    <span id="pctText">0%</span>
+    <span class="of"> of <span id="goalText">2,000</span> ml</span>
   </div>
 
-  <div class="next" id="countdown">
-    <span id="cdText">Reminders are off</span>
+  <div class="statusline" id="statusLine">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2.6s6.6 7.3 6.6 11.9a6.6 6.6 0 1 1-13.2 0C5.4 9.9 12 2.6 12 2.6Z"/>
+    </svg>
+    <span id="statusText">Let's start with a glass</span>
   </div>
 
-  <div class="adds">
-    <button class="btn solid" id="addMain">Add a glass<span id="mainAmount">250 ml</span></button>
-    <div class="row">
-      <button class="btn" data-add="100">100 ml</button>
-      <button class="btn" data-add="500">500 ml</button>
-      <button class="btn" id="undoBtn">Undo</button>
-    </div>
+  <button class="add" id="addMain">Add a glass <span class="amt" id="mainAmount">250 ml</span></button>
+  <div class="quick">
+    <button data-add="100">100 ml</button>
+    <button data-add="500">500 ml</button>
+    <button id="undoBtn" disabled>Undo</button>
   </div>
 
-  <section class="notice" id="permBanner">
-    <p id="permMsg">Allow notifications once and this app will remind you at your chosen interval, even with the screen off.</p>
-    <div class="row">
-      <button class="btn solid sm" id="enableBtn">Allow notifications</button>
-      <button class="btn sm" id="testBtn">Send test</button>
-    </div>
-  </section>
+  <p class="nextline" id="nextline">Reminders are off · <a href="settings.html">Turn on</a></p>
 
-  <section class="notice flat hidden" id="installCard">
-    <div class="spread">
-      <div>
-        <strong id="installTitle">Install as an app</strong>
-        <p id="installSub">Add it to your home screen for full-screen reminders.</p>
-      </div>
-      <button class="btn sm" id="installBtn">Install</button>
-    </div>
-  </section>
-
-  <section class="week">
-    <div class="label">Last 7 days</div>
+  <section class="card">
+    <div class="hd"><h2>Last 7 days</h2><span id="weekAvg">—</span></div>
     <div class="bars" id="bars"></div>
   </section>
 
-  <details id="settings">
-    <summary>Settings <span class="plus">+</span></summary>
-    <div class="set">
-
-      <div class="field">
-        <span class="fl">Remind me every</span>
-        <div class="chips" id="intervalChips">
-          <button class="chip" data-min="30">30 min</button>
-          <button class="chip" data-min="45">45 min</button>
-          <button class="chip" data-min="60">1 hour</button>
-          <button class="chip" data-min="90">1.5 hours</button>
-          <button class="chip" data-min="120">2 hours</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <span class="fl">Only between</span>
-        <div class="times">
-          <input type="time" id="startTime" value="08:00" aria-label="Start time" />
-          <span>to</span>
-          <input type="time" id="endTime" value="22:00" aria-label="End time" />
-        </div>
-      </div>
-
-      <div class="field">
-        <span class="fl">Daily goal</span>
-        <div class="chips" id="goalChips">
-          <button class="chip" data-goal="1500">1.5 L</button>
-          <button class="chip" data-goal="2000">2 L</button>
-          <button class="chip" data-goal="2500">2.5 L</button>
-          <button class="chip" data-goal="3000">3 L</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <span class="fl">One glass is</span>
-        <div class="chips" id="glassChips">
-          <button class="chip" data-glass="200">200 ml</button>
-          <button class="chip" data-glass="250">250 ml</button>
-          <button class="chip" data-glass="300">300 ml</button>
-          <button class="chip" data-glass="500">500 ml</button>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="toggle">
-        <div>
-          <div class="tl">Vibrate</div>
-          <div class="ts">Buzz the phone with each reminder</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="vibrateToggle" checked /><i></i></label>
-      </div>
-
-      <div class="toggle">
-        <div>
-          <div class="tl">Sound</div>
-          <div class="ts">Soft chime when the app is open</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="soundToggle" checked /><i></i></label>
-      </div>
-
-      <div class="divider"></div>
-
-      <button class="btn sm" id="resetBtn" style="align-self:flex-start">Reset today's log</button>
-
-      <p class="hint">
-        Reminders keep firing while the app is open in the background. If you close it fully,
-        Chrome on Android may still wake it every 15 minutes or so. iOS does not allow that,
-        so keep the app open in the background or reopen it once a day.
-      </p>
-    </div>
-  </details>
-
-  <footer>
-    Works offline. Everything stays on this device.<br />
-    <span id="version">v1.2.0</span>
-  </footer>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<script src="app.js"></script>
 <script>
 (() => {
   "use strict";
-
-  const STORE_KEY = "water.v1";
+  const C = window.WaterCore;
   const $ = (id) => document.getElementById(id);
-  const todayKey = () => new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD local
+  const RING = 2 * Math.PI * 104;
 
-  const DEFAULTS = {
-    intervalMin: 60,
-    startMin: 8 * 60,
-    endMin: 22 * 60,
-    goalMl: 2000,
-    glassMl: 250,
-    vibrate: true,
-    sound: true,
-    nextAt: null,
-    enabled: false
-  };
+  let state = C.load();
 
-  /* ---------------- state ---------------- */
-  function loadState() {
-    let s = {};
-    try { s = JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch (e) { s = {}; }
-    const settings = Object.assign({}, DEFAULTS, s.settings || {});
-    const history = s.history && typeof s.history === "object" ? s.history : {};
-    const today = todayKey();
-    const mlToday = Number(history[today] || 0);
-    return { settings, history, mlToday, lastAdd: s.lastAdd || null };
-  }
-  let state = loadState();
-
-  function save() {
-    localStorage.setItem(STORE_KEY, JSON.stringify({
-      settings: state.settings,
-      history: state.history,
-      lastAdd: state.lastAdd
-    }));
-    pushScheduleToSW();
-  }
-
-  function setToday(ml) {
-    state.mlToday = Math.max(0, Math.round(ml));
-    state.history[todayKey()] = state.mlToday;
-    const keys = Object.keys(state.history).sort();
-    while (keys.length > 120) delete state.history[keys.shift()];
-    save();
-    render();
-  }
-
-  /* ---------------- IndexedDB bridge for the service worker ---------------- */
-  function idb() {
-    return new Promise((res, rej) => {
-      const r = indexedDB.open("water-db", 1);
-      r.onupgradeneeded = () => { r.result.createObjectStore("kv"); };
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    });
-  }
-  async function idbSet(k, v) {
-    try {
-      const db = await idb();
-      await new Promise((res, rej) => {
-        const tx = db.transaction("kv", "readwrite");
-        tx.objectStore("kv").put(v, k);
-        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
-      });
-      db.close();
-    } catch (e) { /* non-fatal */ }
-  }
-  function pushScheduleToSW() {
-    const s = state.settings;
-    idbSet("schedule", {
-      nextAt: s.nextAt,
-      intervalMin: s.intervalMin,
-      startMin: s.startMin,
-      endMin: s.endMin,
-      enabled: !!s.enabled && s.nextAt !== null,
-      updated: Date.now()
-    });
-  }
-
-  /* ---------------- scheduling ---------------- */
-  function nextFrom(fromTs) {
-    const s = state.settings;
-    let t = fromTs + s.intervalMin * 60000;
-    const start = s.startMin, end = s.endMin;
-    if (end <= start) return t;
-    for (let i = 0; i < 4; i++) {
-      const d = new Date(t);
-      const mins = d.getHours() * 60 + d.getMinutes();
-      if (mins < start) { d.setHours(Math.floor(start / 60), start % 60, 0, 0); t = d.getTime(); break; }
-      if (mins >= end) {
-        d.setDate(d.getDate() + 1);
-        d.setHours(Math.floor(start / 60), start % 60, 0, 0);
-        t = d.getTime();
-        continue;
-      }
-      break;
-    }
-    return t;
-  }
-
-  function scheduleNext(fromTs) {
-    state.settings.nextAt = nextFrom(fromTs || Date.now());
-    save();
-    armTimer();
-  }
-
+  /* ---------- schedule + reminders ---------- */
   let timer = null;
   function armTimer() {
     clearTimeout(timer);
-    if (!state.settings.enabled || !state.settings.nextAt) return;
-    const delay = state.settings.nextAt - Date.now();
+    const s = state.settings;
+    if (!s.enabled || !s.nextAt) return;
+    const delay = s.nextAt - Date.now();
     if (delay <= 0) { fireReminder(); return; }
     timer = setTimeout(fireReminder, Math.min(delay, 2147483647));
   }
 
-  // watchdog: catches missed timers after the device sleeps
   setInterval(() => {
     const s = state.settings;
     if (!s.enabled || !s.nextAt) return;
@@ -457,13 +291,14 @@
     const s = state.settings;
     const left = Math.max(0, s.goalMl - state.mlToday);
     const body = state.mlToday === 0
-      ? "Time to start. A glass of water right now?"
-      : (left > 0 ? `${state.mlToday} ml down, ${left} ml to go today.` : "Goal already done. A little extra never hurts.");
-
+      ? "Pal's getting thirsty — time for a glass."
+      : (left > 0 ? `${fmt(state.mlToday)} ml down, ${fmt(left)} ml to go today.`
+                  : "Goal already done — a little extra never hurts.");
     notify("Drink some water", body);
     chime();
     if (s.vibrate && navigator.vibrate) navigator.vibrate([90, 60, 90]);
-    scheduleNext(Date.now());
+    C.scheduleNext(state, Date.now());
+    armTimer();
     render();
   }
 
@@ -501,7 +336,7 @@
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
         o.type = "sine"; o.frequency.value = f;
         g.gain.setValueAtTime(0.0001, now + i * 0.14);
-        g.gain.exponentialRampToValueAtTime(0.12, now + i * 0.14 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.11, now + i * 0.14 + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.14 + 0.5);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(now + i * 0.14); o.stop(now + i * 0.14 + 0.55);
@@ -509,128 +344,70 @@
     } catch (e) { /* audio blocked, fine */ }
   }
 
-  /* ---------------- rendering ---------------- */
-  function fmtClock(ts) {
-    return new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  }
+  /* ---------- render ---------- */
+  const fmt = (n) => Number(n).toLocaleString("en-IN");
 
-  function renderDrop() {
-    const s = state.settings;
-    const pct = s.goalMl ? Math.min(1, state.mlToday / s.goalMl) : 0;
-    // the drop grows from 0.58 to 1 as you drink
-    const scale = 0.58 + 0.42 * pct;
-    $("dropG").style.transform = `scale(${scale.toFixed(3)})`;
-    return pct;
+  function statusFor(pct) {
+    if (pct >= 1) return "Goal reached. Nice work!";
+    if (pct >= 0.75) return "Almost there — keep going";
+    if (pct > 0) return "Pal's getting there";
+    return "Let's start with a glass";
   }
 
   function render() {
     const s = state.settings;
-    const pct = renderDrop();
+    const pct = s.goalMl ? Math.min(1, state.mlToday / s.goalMl) : 0;
 
-    $("mlNow").textContent = state.mlToday;
-    $("goalText").textContent = s.goalMl;
-    $("pctText").textContent = Math.round(pct * 100) + "%";
-
-    const glasses = state.mlToday / s.glassMl;
-    $("glassText").textContent =
-      `${Number(glasses.toFixed(1))} of ${Math.round(s.goalMl / s.glassMl)} glasses`;
+    $("mlNow").textContent = fmt(state.mlToday);
+    $("goalText").textContent = fmt(s.goalMl);
+    $("statusText").textContent = statusFor(pct);
     $("mainAmount").textContent = s.glassMl + " ml";
+    $("ringBar").setAttribute("stroke-dashoffset", (RING * (1 - pct)).toFixed(1));
 
-    const cd = $("countdown");
+    const streak = C.streak(state.history, s.goalMl);
+    $("streakChip").classList.toggle("hidden", streak < 2);
+    $("streakNum").textContent = streak;
+
+    $("undoBtn").disabled = !state.lastAdd;
+
+    // next reminder line
+    const nl = $("nextline");
     if (s.enabled && s.nextAt) {
       const mins = Math.max(0, Math.round((s.nextAt - Date.now()) / 60000));
-      $("cdText").innerHTML = mins <= 0
+      nl.innerHTML = mins <= 0
         ? "Reminder due now"
-        : `Next reminder <b>${fmtClock(s.nextAt)}</b>`;
-      cd.style.color = "var(--ink)";
+        : `Next reminder <b>${C.fmtClock(s.nextAt)}</b> · in ${mins} min`;
     } else {
-      $("cdText").textContent = "Reminders are off";
-      cd.style.color = "var(--muted)";
+      nl.innerHTML = `Reminders are off · <a href="settings.html">Turn on</a>`;
     }
 
-    document.querySelectorAll("#intervalChips .chip").forEach(b =>
-      b.setAttribute("aria-pressed", Number(b.dataset.min) === s.intervalMin ? "true" : "false"));
-    document.querySelectorAll("#goalChips .chip").forEach(b =>
-      b.setAttribute("aria-pressed", Number(b.dataset.goal) === s.goalMl ? "true" : "false"));
-    document.querySelectorAll("#glassChips .chip").forEach(b =>
-      b.setAttribute("aria-pressed", Number(b.dataset.glass) === s.glassMl ? "true" : "false"));
-
-    $("startTime").value = minToTime(s.startMin);
-    $("endTime").value = minToTime(s.endMin);
-    $("vibrateToggle").checked = !!s.vibrate;
-    $("soundToggle").checked = !!s.sound;
-    $("undoBtn").disabled = !state.lastAdd;
-    $("undoBtn").style.opacity = state.lastAdd ? "1" : ".45";
-
     renderWeek();
-    renderPermission();
-  }
-
-  function minToTime(m) {
-    const h = String(Math.floor(m / 60) % 24).padStart(2, "0");
-    const mm = String(m % 60).padStart(2, "0");
-    return `${h}:${mm}`;
-  }
-  function timeToMin(v) {
-    const [h, m] = (v || "0:0").split(":").map(Number);
-    return (h || 0) * 60 + (m || 0);
   }
 
   function renderWeek() {
-    const wrap = $("bars");
-    const days = [];
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const key = d.toLocaleDateString("en-CA");
-      days.push({
-        key,
-        label: d.toLocaleDateString([], { weekday: "narrow" }),
-        ml: Number(state.history[key] || 0),
-        cur: i === 0
-      });
-    }
+    const days = C.week(state.history, state.settings.goalMl);
     const max = Math.max(state.settings.goalMl, ...days.map(d => d.ml), 1);
-    const H = 46;
-    wrap.innerHTML = days.map(d => {
-      const h = d.ml > 0 ? Math.max(5, Math.round((d.ml / max) * H)) : 2;
-      return `
-      <div class="day ${d.cur ? "cur" : ""} ${d.ml > 0 ? "has" : ""}" title="${d.ml} ml">
-        <div class="track-b"><div class="b" style="height:${h}px"></div></div>
+    const H = 52;
+    $("bars").innerHTML = days.map(d => {
+      const h = d.ml > 0 ? Math.max(6, Math.round((d.ml / max) * H)) : 3;
+      return `<div class="day ${d.cur ? "cur" : ""} ${d.ml > 0 ? "has" : ""}" title="${fmt(d.ml)} ml">
+        <div class="tb"><div class="b" style="height:${h}px"></div></div>
         <div class="d">${d.label}</div>
       </div>`;
     }).join("");
+    const done = days.filter(d => d.ml > 0);
+    $("weekAvg").textContent = done.length
+      ? fmt(Math.round(done.reduce((a, d) => a + d.ml, 0) / done.length)) + " ml avg"
+      : "—";
   }
 
-  function renderPermission() {
-    const dot = $("statusDot"), txt = $("statusText");
-    const supported = "Notification" in window;
-    const perm = supported ? Notification.permission : "unsupported";
-
-    if (!supported) {
-      dot.className = "dot off"; txt.textContent = "Not supported";
-      $("permBanner").classList.add("hidden");
-      return;
-    }
-    if (perm === "granted" && state.settings.enabled) {
-      dot.className = "dot on"; txt.textContent = "On";
-      $("permBanner").classList.add("hidden");
-    } else if (perm === "granted") {
-      dot.className = "dot off"; txt.textContent = "Ready";
-      $("permBanner").classList.remove("hidden");
-      $("permMsg").textContent = "Notifications are allowed. One tap and the schedule starts.";
-      $("enableBtn").textContent = "Start reminders";
-    } else if (perm === "denied") {
-      dot.className = "dot off"; txt.textContent = "Blocked";
-      $("permBanner").classList.remove("hidden");
-      $("permMsg").textContent = "Notifications are blocked for this site. Allow them from your browser's site settings (lock icon in the address bar), then reload.";
-      $("enableBtn").textContent = "How to fix";
-    } else {
-      dot.className = "dot off"; txt.textContent = "Off";
-      $("permBanner").classList.remove("hidden");
-      $("enableBtn").textContent = "Allow notifications";
-    }
+  function pop() {
+    const h = $("hero");
+    h.classList.remove("pop");
+    void h.offsetWidth;
+    h.classList.add("pop");
+    clearTimeout(pop._t);
+    pop._t = setTimeout(() => h.classList.remove("pop"), 600);
   }
 
   function toast(msg) {
@@ -638,26 +415,18 @@
     t.textContent = msg;
     t.classList.add("show");
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => t.classList.remove("show"), 2000);
+    toast._t = setTimeout(() => t.classList.remove("show"), 1900);
   }
 
-  function pop() {
-    const st = $("stage");
-    st.classList.remove("pop");
-    void st.offsetWidth;
-    st.classList.add("pop");
-    clearTimeout(pop._t);
-    pop._t = setTimeout(() => st.classList.remove("pop"), 700);
-  }
-
-  /* ---------------- actions ---------------- */
+  /* ---------- actions ---------- */
   function addWater(ml) {
     if (!ml) return;
     state.lastAdd = { ml, at: Date.now() };
-    setToday(state.mlToday + ml);
+    C.setToday(state, state.mlToday + ml);
     pop();
-    if (state.settings.vibrate && navigator.vibrate) navigator.vibrate(18);
-    toast(`Added ${ml} ml`);
+    if (state.settings.vibrate && navigator.vibrate) navigator.vibrate(16);
+    toast(`+${ml} ml`);
+    render();
   }
 
   $("addMain").addEventListener("click", () => addWater(state.settings.glassMl));
@@ -666,156 +435,80 @@
 
   $("undoBtn").addEventListener("click", () => {
     if (!state.lastAdd) return;
-    setToday(state.mlToday - state.lastAdd.ml);
+    C.setToday(state, state.mlToday - state.lastAdd.ml);
     state.lastAdd = null;
-    save();
+    C.save(state);
     render();
     toast("Last entry removed");
   });
 
-  $("enableBtn").addEventListener("click", async () => {
-    if (!("Notification" in window)) { toast("This browser can't show notifications"); return; }
-    if (Notification.permission === "denied") {
-      toast("Allow notifications in site settings, then reload");
-      return;
-    }
-    let perm = Notification.permission;
-    if (perm !== "granted") perm = await Notification.requestPermission();
-    if (perm !== "granted") { toast("Notifications not allowed"); renderPermission(); return; }
-
-    state.settings.enabled = true;
-    scheduleNext(Date.now());
-    render();
-    toast("Reminders on. First one at " + fmtClock(state.settings.nextAt));
-    notify("Reminders are on",
-      `You'll be reminded every ${state.settings.intervalMin} minutes between ${minToTime(state.settings.startMin)} and ${minToTime(state.settings.endMin)}.`);
-    chime();
-    registerPeriodicSync();
-  });
-
-  $("testBtn").addEventListener("click", async () => {
-    if (!("Notification" in window)) { toast("This browser can't show notifications"); return; }
-    if (Notification.permission !== "granted") {
-      const p = await Notification.requestPermission();
-      if (p !== "granted") { toast("Allow notifications first"); return; }
-    }
-    notify("Test reminder", "This is what a water reminder looks like.");
-    chime();
-    toast("Test notification sent");
-  });
-
-  document.querySelectorAll("#intervalChips .chip").forEach(b => b.addEventListener("click", () => {
-    state.settings.intervalMin = Number(b.dataset.min);
-    if (state.settings.enabled) scheduleNext(Date.now()); else save();
-    render();
-  }));
-  document.querySelectorAll("#goalChips .chip").forEach(b => b.addEventListener("click", () => {
-    state.settings.goalMl = Number(b.dataset.goal);
-    save(); render();
-  }));
-  document.querySelectorAll("#glassChips .chip").forEach(b => b.addEventListener("click", () => {
-    state.settings.glassMl = Number(b.dataset.glass);
-    save(); render();
-  }));
-
-  ["startTime", "endTime"].forEach(id => $(id).addEventListener("change", () => {
-    state.settings.startMin = timeToMin($("startTime").value);
-    state.settings.endMin = timeToMin($("endTime").value);
-    if (state.settings.enabled) scheduleNext(Date.now()); else save();
-    render();
-  }));
-
-  $("vibrateToggle").addEventListener("change", e => {
-    state.settings.vibrate = e.target.checked; save();
-    if (e.target.checked && navigator.vibrate) navigator.vibrate(60);
-  });
-  $("soundToggle").addEventListener("change", e => {
-    state.settings.sound = e.target.checked; save();
-    if (e.target.checked) chime();
-  });
-
-  $("resetBtn").addEventListener("click", () => {
-    state.lastAdd = null;
-    setToday(0);
-    toast("Today's log cleared");
-  });
-
-  /* ---------------- install ---------------- */
+  /* ---------- install ---------- */
   let deferredPrompt = null;
   const isStandalone = () =>
     window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    if (!isStandalone()) $("installCard").classList.remove("hidden");
+    showInstall("android");
   });
 
-  $("installBtn").addEventListener("click", async () => {
-    if (!deferredPrompt) { toast("Use your browser menu, then Add to Home Screen"); return; }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    if (outcome === "accepted") { $("installCard").classList.add("hidden"); toast("Installed"); }
-  });
-
-  window.addEventListener("appinstalled", () => {
-    $("installCard").classList.add("hidden");
-    toast("Installed. Open it from your home screen.");
-  });
-
-  function setupInstallUi() {
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    if (isStandalone()) { $("installCard").classList.add("hidden"); return; }
-    if (ios) {
-      $("installCard").classList.remove("hidden");
+  function showInstall(kind) {
+    if (isStandalone()) return;
+    const row = $("installRow");
+    row.classList.remove("hidden");
+    if (kind === "android" && deferredPrompt) {
+      $("installTitle").textContent = "Install the app";
+      $("installSub").textContent = "Add it to your home screen — one tap.";
+      $("installBtn").classList.remove("hidden");
+    } else if (kind === "menu") {
+      $("installTitle").textContent = "Install as an app";
+      $("installSub").textContent = "Open your browser menu, then “Install app” or “Add to Home screen”.";
       $("installBtn").classList.add("hidden");
-      $("installTitle").textContent = "Add to Home Screen";
-      $("installSub").textContent = "Tap Share, then Add to Home Screen.";
-    } else if (!deferredPrompt) {
-      setTimeout(() => {
-        if (!deferredPrompt && !isStandalone()) {
-          $("installCard").classList.remove("hidden");
-          $("installTitle").textContent = "Install as an app";
-          $("installSub").textContent = "Browser menu, then Install app / Add to Home screen.";
-        }
-      }, 2500);
     }
   }
 
-  /* ---------------- periodic background sync (best effort) ---------------- */
-  async function registerPeriodicSync() {
-    try {
-      if (!("serviceWorker" in navigator)) return;
-      const reg = await navigator.serviceWorker.ready;
-      if (!("periodicSync" in reg)) return;
-      const status = await navigator.permissions.query({ name: "periodic-background-sync" });
-      if (status.state !== "granted") return;
-      await reg.periodicSync.register("water-check", { minInterval: 15 * 60 * 1000 });
-    } catch (e) { /* unsupported, ignore */ }
+  $("installBtn").addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (outcome === "accepted") {
+      $("installRow").classList.add("hidden");
+      toast("Installed");
+    }
+  });
+
+  function setupInstall() {
+    if (isStandalone()) { $("installRow").classList.add("hidden"); return; }
+    if (isIOS()) {
+      $("installRow").classList.remove("hidden");
+      $("installTitle").textContent = "Add to Home Screen";
+      $("installSub").textContent = "Tap the Share button, then “Add to Home Screen”.";
+      $("installBtn").classList.add("hidden");
+    } else {
+      // Android/desktop: the button appears as soon as Chrome offers the prompt
+      setTimeout(() => { if (!deferredPrompt) showInstall("menu"); }, 2000);
+    }
   }
 
-  /* ---------------- service worker ---------------- */
-  async function initSW() {
-    if (!("serviceWorker" in navigator)) return;
-    try {
-      await navigator.serviceWorker.register("sw.js", { scope: "./" });
-    } catch (e) { /* offline support kicks in on the next visit */ }
-  }
-
+  /* ---------- service worker ---------- */
   if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(() => {});
     navigator.serviceWorker.addEventListener("message", (ev) => {
       const d = ev.data || {};
       if (d.type === "drank") addWater(state.settings.glassMl);
       if (d.type === "snoozed") {
         state.settings.nextAt = Date.now() + 10 * 60000;
-        save(); armTimer(); render();
+        C.save(state); armTimer(); render();
         toast("Snoozed 10 minutes");
       }
     });
   }
 
-  /* ---------------- boot ---------------- */
+  /* ---------- boot ---------- */
   function boot() {
     const params = new URLSearchParams(location.search);
     if (params.get("drank") === "1") {
@@ -823,38 +516,31 @@
       history.replaceState({}, "", location.pathname);
     }
 
-    const key = todayKey();
-    if (state.history[key] === undefined) { state.history[key] = state.mlToday; save(); }
+    const key = C.todayKey();
+    if (state.history[key] === undefined) { state.history[key] = state.mlToday; C.save(state); }
 
     const s = state.settings;
     if (s.enabled && s.nextAt && Date.now() - s.nextAt > 60000) {
-      scheduleNext(Date.now());
-    } else if (s.enabled && s.nextAt) {
-      armTimer();
+      C.scheduleNext(state, Date.now());
     }
-
+    armTimer();
     render();
-    setupInstallUi();
-    initSW();
-    registerPeriodicSync();
-    pushScheduleToSW();
+    setupInstall();
 
-    // keep the "next reminder" line honest
-    setInterval(() => {
-      const s2 = state.settings;
-      if (!s2.enabled || !s2.nextAt) return;
-      const mins = Math.max(0, Math.round((s2.nextAt - Date.now()) / 60000));
-      const el = $("cdText");
-      if (el && mins > 0) el.innerHTML = `Next reminder <b>${fmtClock(s2.nextAt)}</b>`;
-    }, 15000);
+    const h = new Date().getHours();
+    $("greeting").textContent = h < 12 ? "Good morning — start with a glass"
+      : h < 17 ? "Good afternoon — keep it going"
+      : "Good evening — top up before bed";
 
+    // refresh the countdown + reload state when coming back from settings
+    setInterval(render, 20000);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState !== "visible") return;
-      if (state.settings.enabled && state.settings.nextAt && Date.now() >= state.settings.nextAt) {
-        fireReminder();
-      }
+      state = C.load();
       render();
+      armTimer();
     });
+    window.addEventListener("focus", () => { state = C.load(); render(); });
   }
 
   boot();
