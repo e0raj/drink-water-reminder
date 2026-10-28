@@ -1,7 +1,7 @@
 /* Drink Water Reminder — service worker
  * Offline shell cache + notification handling + best-effort background checks.
  */
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 const CACHE = "water-shell-" + VERSION;
 
 const SHELL = [

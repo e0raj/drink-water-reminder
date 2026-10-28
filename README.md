@@ -13,7 +13,7 @@ and it nudges you at your chosen interval — no account, no server, no tracking
 - **One permission prompt** — tap *Allow notifications* once, the reminder schedule starts immediately.
 - **Reminders that respect your day** — pick an interval (30 min → 2 hours) and a waking window
   (default 08:00–22:00). Nothing buzzes at night.
-- **Daily goal + streak tracking** — a thin progress bar, glass count, and a 7-day chart, all stored locally.
+- **Daily goal + streak tracking** — a friendly water drop that grows as you drink, plus a 7-day chart, all stored locally.
 - **Quick logging** — one tap for a glass, plus 100 ml / 500 ml buttons, undo, and a
   "Drank it 💧" action right on the notification.
 - **Works offline** — the whole app is cached by a service worker, so it opens instantly with no network.
