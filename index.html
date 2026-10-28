@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Drink Water Reminder</title>
+<meta name="description" content="A calm, offline-first water reminder. Get a nudge, drink a glass, build the habit." />
+<meta name="theme-color" content="#0a1220" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Water" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<style>
+  :root{
+    --bg:#0a1220;
+    --bg-soft:#101c31;
+    --card:rgba(255,255,255,.055);
+    --card-line:rgba(255,255,255,.10);
+    --ink:#eaf2ff;
+    --ink-dim:#9fb2cd;
+    --ink-faint:#6d819c;
+    --water:#38bdf8;
+    --water-deep:#0ea5e9;
+    --water-glow:rgba(56,189,248,.35);
+    --good:#34d399;
+    --warn:#fbbf24;
+    --danger:#fb7185;
+    --radius:20px;
+    --shadow:0 18px 40px -20px rgba(0,0,0,.85);
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#eef5fc;
+      --bg-soft:#ffffff;
+      --card:rgba(255,255,255,.78);
+      --card-line:rgba(12,40,72,.10);
+      --ink:#0b2138;
+      --ink-dim:#4d688a;
+      --ink-faint:#7d93ac;
+      --water:#0284c7;
+      --water-deep:#0369a1;
+      --water-glow:rgba(2,132,199,.22);
+      --shadow:0 18px 40px -24px rgba(11,33,56,.45);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 50% -18%, var(--water-glow), transparent 62%),
+      radial-gradient(900px 500px at 100% 108%, rgba(52,211,153,.13), transparent 60%),
+      var(--bg);
+    background-attachment:fixed;
+    padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 26px);
+    min-height:100%;
+    line-height:1.45;
+  }
+  .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 4px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{width:30px;height:30px;flex:0 0 auto}
+  .brand h1{font-size:17px;margin:0;font-weight:650;letter-spacing:-.2px}
+  .brand p{margin:0;font-size:11.5px;color:var(--ink-faint);letter-spacing:.28px;text-transform:uppercase}
+  .pill{
+    border:1px solid var(--card-line);background:var(--card);color:var(--ink-dim);
+    font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(8px);
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint)}
+  .dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(52,211,153,.18)}
+  .dot.off{background:var(--warn);box-shadow:0 0 0 3px rgba(251,191,36,.16)}
+
+  .card{
+    background:var(--card);border:1px solid var(--card-line);border-radius:var(--radius);
+    box-shadow:var(--shadow);backdrop-filter:blur(14px);
+  }
+
+  /* ---------- hero ---------- */
+  .hero{padding:22px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .ring-wrap{position:relative;width:min(258px,74vw);aspect-ratio:1}
+  .ring{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+  .ring .track{fill:none;stroke:var(--card-line);stroke-width:11}
+  .ring .bar{
+    fill:none;stroke:url(#grad);stroke-width:11;stroke-linecap:round;
+    transition:stroke-dashoffset .7s cubic-bezier(.22,1,.36,1);
+    filter:drop-shadow(0 0 10px var(--water-glow));
+  }
+  .ring-mid{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  }
+  .ml{font-size:40px;font-weight:700;letter-spacing:-1.4px;font-variant-numeric:tabular-nums;line-height:1}
+  .ml span{font-size:15px;font-weight:600;color:var(--ink-dim);margin-left:3px;letter-spacing:0}
+  .goal{font-size:12.5px;color:var(--ink-faint);letter-spacing:.2px}
+  .glasses{font-size:12px;color:var(--water);font-weight:650;margin-top:6px;letter-spacing:.3px}
+
+  .countdown{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
+    background:rgba(56,189,248,.10);border:1px solid rgba(56,189,248,.20);
+    border-radius:14px;padding:11px 14px;font-size:13.5px;color:var(--ink);
+  }
+  .countdown b{font-variant-numeric:tabular-nums;font-weight:700;color:var(--water)}
+  .countdown.idle{background:var(--card);border-color:var(--card-line);color:var(--ink-dim)}
+
+  /* ---------- add row ---------- */
+  .adds{display:grid;grid-template-columns:1.55fr 1fr 1fr 1fr;gap:9px;padding:0 2px}
+  button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;touch-action:manipulation}
+  .btn{
+    border-radius:16px;padding:13px 10px;font-weight:650;font-size:13.5px;
+    border:1px solid var(--card-line);background:var(--card);
+    display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2;
+    transition:transform .12s ease, background .2s ease;
+  }
+  .btn:active{transform:scale(.965)}
+  .btn small{font-size:10.5px;font-weight:600;color:var(--ink-faint);letter-spacing:.3px}
+  .btn.primary{
+    background:linear-gradient(160deg,var(--water),var(--water-deep));
+    color:#04121f;border-color:transparent;
+    box-shadow:0 12px 26px -12px var(--water-glow);
+    flex-direction:row;justify-content:center;gap:8px;font-size:15px;
+  }
+  .btn.primary small{color:rgba(4,18,31,.62)}
+  .btn.primary:disabled{opacity:.42;box-shadow:none;cursor:not-allowed}
+
+  /* ---------- enable banner ---------- */
+  .banner{padding:16px 17px;display:flex;gap:13px;align-items:flex-start;
+    background:linear-gradient(150deg, rgba(56,189,248,.16), rgba(56,189,248,.05));
+    border-color:rgba(56,189,248,.28)}
+  .banner .ico{font-size:20px;line-height:1}
+  .banner h3{margin:0 0 3px;font-size:14px;font-weight:680}
+  .banner p{margin:0;font-size:12.5px;color:var(--ink-dim)}
+  .banner .cta{margin-top:11px;display:flex;gap:9px;flex-wrap:wrap}
+  .mini{
+    border-radius:11px;padding:9px 15px;font-size:12.5px;font-weight:680;
+    background:linear-gradient(160deg,var(--water),var(--water-deep));color:#04121f;
+  }
+  .mini.ghost{background:transparent;border:1px solid var(--card-line);color:var(--ink-dim)}
+
+  /* ---------- install ---------- */
+  .install{padding:15px 17px;display:flex;align-items:center;gap:13px}
+  .install .txt{flex:1;min-width:0}
+  .install h3{margin:0 0 2px;font-size:13.5px;font-weight:660}
+  .install p{margin:0;font-size:12px;color:var(--ink-faint)}
+
+  /* ---------- settings ---------- */
+  details.card{overflow:hidden}
+  summary{
+    list-style:none;cursor:pointer;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+    font-size:13.5px;font-weight:660;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary .chev{transition:transform .22s ease;color:var(--ink-faint);font-size:12px}
+  details[open] summary .chev{transform:rotate(180deg)}
+  .set-body{padding:0 18px 18px;display:flex;flex-direction:column;gap:15px;border-top:1px solid var(--card-line);padding-top:16px}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field label{font-size:12px;font-weight:640;color:var(--ink-dim);letter-spacing:.2px}
+  .row{display:flex;gap:9px;align-items:center}
+  input[type="number"],input[type="time"]{
+    width:100%;background:var(--bg-soft);border:1px solid var(--card-line);color:var(--ink);
+    border-radius:12px;padding:11px 13px;font:inherit;font-size:14px;font-variant-numeric:tabular-nums;
+  }
+  input:focus{outline:2px solid var(--water);outline-offset:1px}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{
+    border:1px solid var(--card-line);background:var(--bg-soft);border-radius:999px;
+    padding:7px 13px;font-size:12px;font-weight:620;color:var(--ink-dim);
+  }
+  .chip[aria-pressed="true"]{background:rgba(56,189,248,.16);border-color:rgba(56,189,248,.45);color:var(--water)}
+  .hint{font-size:11.5px;color:var(--ink-faint);line-height:1.5}
+  .swrow{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--bg-soft);border:1px solid var(--card-line);border-radius:13px;padding:12px 14px}
+  .swrow .lbl{font-size:13px;font-weight:620}
+  .swrow .sub{font-size:11px;color:var(--ink-faint)}
+  .switch{position:relative;width:46px;height:27px;flex:0 0 auto}
+  .switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+  .switch i{position:absolute;inset:0;border-radius:999px;background:var(--card-line);transition:background .22s ease}
+  .switch i::after{
+    content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;
+    background:#fff;transition:transform .22s cubic-bezier(.22,1,.36,1);box-shadow:0 1px 3px rgba(0,0,0,.3);
+  }
+  .switch input:checked + i{background:var(--water)}
+  .switch input:checked + i::after{transform:translateX(19px)}
+
+  /* ---------- week strip ---------- */
+  .week{padding:16px 18px 18px}
+  .week h3{margin:0 0 12px;font-size:12px;font-weight:640;color:var(--ink-dim);letter-spacing:.4px;text-transform:uppercase}
+  .bars{display:flex;gap:7px;align-items:flex-end;height:74px}
+  .day{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+  .day .b{
+    width:100%;border-radius:7px 7px 4px 4px;min-height:5px;
+    background:linear-gradient(180deg,var(--water),var(--water-deep));
+    opacity:.92;transition:height .5s cubic-bezier(.22,1,.36,1);
+  }
+  .day.today .b{box-shadow:0 0 0 1.5px var(--water) inset,0 0 14px var(--water-glow)}
+  .day .d{font-size:10px;color:var(--ink-faint);letter-spacing:.3px}
+  .day.today .d{color:var(--water);font-weight:700}
+
+  footer{text-align:center;font-size:11px;color:var(--ink-faint);padding:6px 10px 2px;line-height:1.7}
+  footer a{color:var(--ink-dim)}
+
+  .toast{
+    position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 22px);transform:translate(-50%,26px);
+    background:var(--bg-soft);border:1px solid var(--card-line);color:var(--ink);
+    padding:11px 18px;border-radius:999px;font-size:13px;font-weight:620;box-shadow:var(--shadow);
+    opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.22,1,.36,1);z-index:60;max-width:88vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .hidden{display:none !important}
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <defs><linearGradient id="dg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#0284c7"/>
+        </linearGradient></defs>
+        <path d="M12 2.6s6.4 7.1 6.4 11.6a6.4 6.4 0 1 1-12.8 0C5.6 9.7 12 2.6 12 2.6Z" fill="url(#dg)"/>
+        <path d="M9.2 14.4a2.9 2.9 0 0 0 2.9 2.9" stroke="#eaf2ff" stroke-width="1.3" stroke-linecap="round" opacity=".75"/>
+      </svg>
+      <div>
+        <h1>Drink Water</h1>
+        <p>Reminder</p>
+      </div>
+    </div>
+    <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">Checking</span></span>
+  </header>
+
+  <!-- HERO -->
+  <section class="card hero">
+    <div class="ring-wrap">
+      <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#7dd3fc"/><stop offset="0.55" stop-color="#38bdf8"/><stop offset="1" stop-color="#0284c7"/>
+          </linearGradient>
+        </defs>
+        <circle class="track" cx="100" cy="100" r="86"/>
+        <circle class="bar" id="ringBar" cx="100" cy="100" r="86" stroke-dasharray="540.35" stroke-dashoffset="540.35"/>
+      </svg>
+      <div class="ring-mid">
+        <div class="ml"><span id="mlNow">0</span><span>ml</span></div>
+        <div class="goal" id="goalText">of 2000 ml today</div>
+        <div class="glasses" id="glassText">0 / 8 glasses</div>
+      </div>
+    </div>
+
+    <div class="countdown idle" id="countdown">
+      <span id="cdIcon">💧</span><span id="cdText">Turn on reminders to get nudges</span>
+    </div>
+  </section>
+
+  <!-- ADD -->
+  <div class="adds">
+    <button class="btn primary" id="addMain">
+      <span>+ Glass</span><small id="mainAmount">250 ml</small>
+    </button>
+    <button class="btn" data-add="100">+100<small>sip</small></button>
+    <button class="btn" data-add="500">+500<small>bottle</small></button>
+    <button class="btn" id="undoBtn">↺<small>undo</small></button>
+  </div>
+
+  <!-- ENABLE BANNER -->
+  <section class="card banner" id="permBanner">
+    <div class="ico">🔔</div>
+    <div style="flex:1">
+      <h3>Turn on water reminders</h3>
+      <p id="permMsg">Allow notifications once, and this app will nudge you at your chosen interval — even with the screen off.</p>
+      <div class="cta">
+        <button class="mini" id="enableBtn">Allow notifications</button>
+        <button class="mini ghost" id="testBtn">Send test</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section class="card install hidden" id="installCard">
+    <div class="ico" style="font-size:20px">📲</div>
+    <div class="txt">
+      <h3 id="installTitle">Install as an app</h3>
+      <p id="installSub">Add it to your home screen for full-screen reminders.</p>
+    </div>
+    <button class="mini" id="installBtn">Install</button>
+  </section>
+
+  <!-- WEEK -->
+  <section class="card week">
+    <h3>Last 7 days</h3>
+    <div class="bars" id="bars"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <details class="card" id="settings">
+    <summary><span>⚙️ Reminder settings</span><span class="chev">▾</span></summary>
+    <div class="set-body">
+
+      <div class="field">
+        <label>Remind me every</label>
+        <div class="chips" id="intervalChips">
+          <button class="chip" data-min="30">30 min</button>
+          <button class="chip" data-min="45">45 min</button>
+          <button class="chip" data-min="60">1 hour</button>
+          <button class="chip" data-min="90">1.5 hours</button>
+          <button class="chip" data-min="120">2 hours</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Only between</label>
+        <div class="row">
+          <input type="time" id="startTime" value="08:00" />
+          <span style="color:var(--ink-faint);font-size:12px">to</span>
+          <input type="time" id="endTime" value="22:00" />
+        </div>
+        <div class="hint">No nudges while you sleep.</div>
+      </div>
+
+      <div class="field">
+        <label>Daily goal</label>
+        <div class="chips" id="goalChips">
+          <button class="chip" data-goal="1500">1.5 L</button>
+          <button class="chip" data-goal="2000">2 L</button>
+          <button class="chip" data-goal="2500">2.5 L</button>
+          <button class="chip" data-goal="3000">3 L</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>One glass is</label>
+        <div class="chips" id="glassChips">
+          <button class="chip" data-glass="200">200 ml</button>
+          <button class="chip" data-glass="250">250 ml</button>
+          <button class="chip" data-glass="300">300 ml</button>
+          <button class="chip" data-glass="500">500 ml</button>
+        </div>
+      </div>
+
+      <div class="swrow">
+        <div>
+          <div class="lbl">Vibrate</div>
+          <div class="sub">Buzz the phone with each nudge</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="vibrateToggle" checked /><i></i></label>
+      </div>
+
+      <div class="swrow">
+        <div>
+          <div class="lbl">Sound</div>
+          <div class="sub">Soft chime when the app is open</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="soundToggle" checked /><i></i></label>
+      </div>
+
+      <button class="mini ghost" id="resetBtn" style="align-self:flex-start">Reset today's log</button>
+
+      <div class="hint">
+        Reminders keep firing with the app open in the background. If you fully close the app,
+        Chrome/Edge on Android may still wake it every 15 minutes or so; iOS does not allow that,
+        so on iPhone keep the app open in the background (or add it to your home screen and reopen once a day).
+      </div>
+    </div>
+  </details>
+
+  <footer>
+    Works fully offline · Your data never leaves this device<br />
+    <span id="version">v1.0.0</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const STORE_KEY = "water.v1";
+  const RING_CIRC = 2 * Math.PI * 86;
+  const $ = (id) => document.getElementById(id);
+  const todayKey = () => new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD local
+
+  const DEFAULTS = {
+    intervalMin: 60,
+    startMin: 8 * 60,
+    endMin: 22 * 60,
+    goalMl: 2000,
+    glassMl: 250,
+    vibrate: true,
+    sound: true,
+    nextAt: null,
+    enabled: false
+  };
+
+  /* ---------------- state ---------------- */
+  function loadState() {
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch (e) { s = {}; }
+    const settings = Object.assign({}, DEFAULTS, s.settings || {});
+    const history = s.history && typeof s.history === "object" ? s.history : {};
+    const today = todayKey();
+    const mlToday = Number(history[today] || 0);
+    return { settings, history, mlToday, lastAdd: s.lastAdd || null };
+  }
+  let state = loadState();
+
+  function save() {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      settings: state.settings,
+      history: state.history,
+      lastAdd: state.lastAdd
+    }));
+    pushScheduleToSW();
+  }
+
+  function setToday(ml) {
+    state.mlToday = Math.max(0, Math.round(ml));
+    state.history[todayKey()] = state.mlToday;
+    // keep the log tidy: last 120 days only
+    const keys = Object.keys(state.history).sort();
+    while (keys.length > 120) delete state.history[keys.shift()];
+    save();
+    render();
+  }
+
+  /* ---------------- IndexedDB bridge for the service worker ---------------- */
+  function idb() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open("water-db", 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore("kv"); };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+  }
+  async function idbSet(k, v) {
+    try {
+      const db = await idb();
+      await new Promise((res, rej) => {
+        const tx = db.transaction("kv", "readwrite");
+        tx.objectStore("kv").put(v, k);
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+      });
+      db.close();
+    } catch (e) { /* non-fatal */ }
+  }
+  function pushScheduleToSW() {
+    const s = state.settings;
+    idbSet("schedule", {
+      nextAt: s.nextAt,
+      intervalMin: s.intervalMin,
+      startMin: s.startMin,
+      endMin: s.endMin,
+      enabled: !!s.enabled && s.nextAt !== null,
+      updated: Date.now()
+    });
+  }
+
+  /* ---------------- scheduling ---------------- */
+  function nextFrom(fromTs) {
+    const s = state.settings;
+    let t = fromTs + s.intervalMin * 60000;
+    const start = s.startMin, end = s.endMin;
+    if (end <= start) return t; // treat as unrestricted
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(t);
+      const mins = d.getHours() * 60 + d.getMinutes();
+      if (mins < start) { d.setHours(Math.floor(start / 60), start % 60, 0, 0); t = d.getTime(); break; }
+      if (mins >= end) {
+        d.setDate(d.getDate() + 1);
+        d.setHours(Math.floor(start / 60), start % 60, 0, 0);
+        t = d.getTime();
+        continue;
+      }
+      break;
+    }
+    return t;
+  }
+
+  function scheduleNext(fromTs) {
+    state.settings.nextAt = nextFrom(fromTs || Date.now());
+    save();
+    armTimer();
+  }
+
+  let timer = null;
+  function armTimer() {
+    clearTimeout(timer);
+    if (!state.settings.enabled || !state.settings.nextAt) return;
+    const delay = state.settings.nextAt - Date.now();
+    if (delay <= 0) { fireReminder(); return; }
+    // setTimeout caps around 24.8 days; our delays are always < 24h
+    timer = setTimeout(fireReminder, Math.min(delay, 2147483647));
+  }
+
+  // watchdog: catches missed timers after the device sleeps
+  setInterval(() => {
+    const s = state.settings;
+    if (!s.enabled || !s.nextAt) return;
+    if (Date.now() >= s.nextAt) fireReminder();
+  }, 20000);
+
+  function fireReminder() {
+    if (!state.settings.enabled) return;
+    const s = state.settings;
+    const left = Math.max(0, s.goalMl - state.mlToday);
+    const body = state.mlToday === 0
+      ? "Time to start. A glass of water right now?"
+      : (left > 0 ? `${state.mlToday} ml down, ${left} ml to go today.` : "Goal already done — a little extra never hurts.");
+
+    notify("💧 Drink some water", body);
+    chime();
+    if (s.vibrate && navigator.vibrate) navigator.vibrate([90, 60, 90]);
+    scheduleNext(Date.now());
+    render();
+  }
+
+  async function notify(title, body) {
+    const opts = {
+      body,
+      icon: "icons/icon-192.png",
+      badge: "icons/badge-72.png",
+      vibrate: state.settings.vibrate ? [90, 60, 90] : undefined,
+      tag: "water-reminder",
+      renotify: true,
+      requireInteraction: false,
+      silent: false,
+      data: { url: "./?drank=1" },
+      actions: [{ action: "drank", title: "Drank it 💧" }, { action: "snooze", title: "Snooze 10m" }]
+    };
+    try {
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.showNotification(title, opts);
+        return;
+      }
+    } catch (e) { /* fall through */ }
+    try {
+      if (Notification.permission === "granted") new Notification(title, opts);
+    } catch (e) { /* nothing else we can do */ }
+  }
+
+  let audioCtx = null;
+  function chime() {
+    if (!state.settings.sound) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const now = audioCtx.currentTime;
+      [880, 1174].forEach((f, i) => {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = "sine"; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, now + i * 0.14);
+        g.gain.exponentialRampToValueAtTime(0.14, now + i * 0.14 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.14 + 0.5);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(now + i * 0.14); o.stop(now + i * 0.14 + 0.55);
+      });
+    } catch (e) { /* audio blocked, fine */ }
+  }
+
+  /* ---------------- rendering ---------------- */
+  function fmtClock(ts) {
+    const d = new Date(ts);
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  function render() {
+    const s = state.settings;
+    const pct = Math.min(1, s.goalMl ? state.mlToday / s.goalMl : 0);
+
+    $("mlNow").textContent = state.mlToday;
+    $("goalText").textContent = `of ${s.goalMl} ml today`;
+    const glasses = (state.mlToday / s.glassMl);
+    $("glassText").textContent = `${Number(glasses.toFixed(1))} / ${Math.round(s.goalMl / s.glassMl)} glasses`;
+    $("mainAmount").textContent = s.glassMl + " ml";
+
+    $("ringBar").setAttribute("stroke-dasharray", RING_CIRC.toFixed(2));
+    $("ringBar").setAttribute("stroke-dashoffset", (RING_CIRC * (1 - pct)).toFixed(2));
+
+    // countdown
+    const cd = $("countdown");
+    if (s.enabled && s.nextAt) {
+      cd.classList.remove("idle");
+      const mins = Math.max(0, Math.round((s.nextAt - Date.now()) / 60000));
+      $("cdIcon").textContent = "⏰";
+      $("cdText").innerHTML = mins <= 0
+        ? "Reminder due now"
+        : `Next nudge at <b>${fmtClock(s.nextAt)}</b> · in ${mins} min`;
+    } else {
+      cd.classList.add("idle");
+      $("cdIcon").textContent = "💧";
+      $("cdText").textContent = "Reminders are off — allow notifications below";
+    }
+
+    // chips
+    document.querySelectorAll("#intervalChips .chip").forEach(b => {
+      const m = Number(b.dataset.min);
+      const active = m === s.intervalMin;
+      b.setAttribute("aria-pressed", active ? "true" : "false");
+      if (active) b.classList.add("on"); else b.classList.remove("on");
+    });
+    document.querySelectorAll("#goalChips .chip").forEach(b =>
+      b.setAttribute("aria-pressed", Number(b.dataset.goal) === s.goalMl ? "true" : "false"));
+    document.querySelectorAll("#glassChips .chip").forEach(b =>
+      b.setAttribute("aria-pressed", Number(b.dataset.glass) === s.glassMl ? "true" : "false"));
+
+    $("startTime").value = minToTime(s.startMin);
+    $("endTime").value = minToTime(s.endMin);
+    $("vibrateToggle").checked = !!s.vibrate;
+    $("soundToggle").checked = !!s.sound;
+
+    $("undoBtn").classList.toggle("hidden", !state.lastAdd);
+
+    renderWeek();
+    renderPermission();
+  }
+
+  function minToTime(m) {
+    const h = String(Math.floor(m / 60) % 24).padStart(2, "0");
+    const mm = String(m % 60).padStart(2, "0");
+    return `${h}:${mm}`;
+  }
+  function timeToMin(v) {
+    const [h, m] = (v || "0:0").split(":").map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+
+  function renderWeek() {
+    const wrap = $("bars");
+    const days = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString("en-CA");
+      days.push({ key, label: d.toLocaleDateString([], { weekday: "narrow" }), ml: Number(state.history[key] || 0), today: i === 0 });
+    }
+    const max = Math.max(state.settings.goalMl, ...days.map(d => d.ml), 1);
+    wrap.innerHTML = days.map(d => `
+      <div class="day ${d.today ? "today" : ""}" title="${d.ml} ml">
+        <div class="b" style="height:${Math.max(4, (d.ml / max) * 100)}%"></div>
+        <div class="d">${d.label}</div>
+      </div>`).join("");
+  }
+
+  function renderPermission() {
+    const pill = $("statusPill"), dot = $("statusDot"), txt = $("statusText");
+    const supported = "Notification" in window;
+    const perm = supported ? Notification.permission : "unsupported";
+
+    if (!supported) {
+      dot.className = "dot off"; txt.textContent = "Not supported";
+      $("permBanner").classList.add("hidden");
+      return;
+    }
+    if (perm === "granted" && state.settings.enabled) {
+      dot.className = "dot on"; txt.textContent = "Reminders on";
+      $("permBanner").classList.add("hidden");
+    } else if (perm === "granted") {
+      dot.className = "dot off"; txt.textContent = "Tap to start";
+      $("permBanner").classList.remove("hidden");
+      $("permMsg").textContent = "Notifications are allowed. One tap and the schedule starts.";
+      $("enableBtn").textContent = "Start reminders";
+    } else if (perm === "denied") {
+      dot.className = "dot off"; txt.textContent = "Blocked";
+      $("permBanner").classList.remove("hidden");
+      $("permMsg").textContent = "Notifications are blocked for this site. Open your browser's site settings (the lock icon in the address bar) and allow notifications, then reload.";
+      $("enableBtn").textContent = "How to fix";
+    } else {
+      dot.className = "dot off"; txt.textContent = "Notifications off";
+      $("permBanner").classList.remove("hidden");
+      $("enableBtn").textContent = "Allow notifications";
+    }
+  }
+
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.classList.remove("show"), 2100);
+  }
+
+  /* ---------------- actions ---------------- */
+  function addWater(ml) {
+    if (!ml) return;
+    state.lastAdd = { ml, at: Date.now() };
+    setToday(state.mlToday + ml);
+    toast(`+${ml} ml logged`);
+  }
+
+  $("addMain").addEventListener("click", () => addWater(state.settings.glassMl));
+  document.querySelectorAll("[data-add]").forEach(b =>
+    b.addEventListener("click", () => addWater(Number(b.dataset.add))));
+
+  $("undoBtn").addEventListener("click", () => {
+    if (!state.lastAdd) return;
+    setToday(state.mlToday - state.lastAdd.ml);
+    state.lastAdd = null;
+    save();
+    render();
+    toast("Last entry removed");
+  });
+
+  $("enableBtn").addEventListener("click", async () => {
+    if (!("Notification" in window)) { toast("This browser can't show notifications"); return; }
+    if (Notification.permission === "denied") {
+      toast("Allow notifications in site settings, then reload");
+      return;
+    }
+    let perm = Notification.permission;
+    if (perm !== "granted") perm = await Notification.requestPermission();
+    if (perm !== "granted") { toast("Notifications not allowed"); renderPermission(); return; }
+
+    state.settings.enabled = true;
+    scheduleNext(Date.now());
+    render();
+    toast("Reminders on — first nudge at " + fmtClock(state.settings.nextAt));
+    notify("💧 Reminders are on", `We'll nudge you every ${state.settings.intervalMin} minutes between ${minToTime(state.settings.startMin)} and ${minToTime(state.settings.endMin)}.`);
+    chime();
+    registerPeriodicSync();
+  });
+
+  $("testBtn").addEventListener("click", async () => {
+    if (!("Notification" in window)) { toast("This browser can't show notifications"); return; }
+    if (Notification.permission !== "granted") {
+      const p = await Notification.requestPermission();
+      if (p !== "granted") { toast("Allow notifications first"); return; }
+    }
+    notify("💧 Test nudge", "This is what a water reminder looks like.");
+    chime();
+    toast("Test notification sent");
+  });
+
+  document.querySelectorAll("#intervalChips .chip").forEach(b => b.addEventListener("click", () => {
+    state.settings.intervalMin = Number(b.dataset.min);
+    if (state.settings.enabled) scheduleNext(Date.now()); else save();
+    render();
+  }));
+  document.querySelectorAll("#goalChips .chip").forEach(b => b.addEventListener("click", () => {
+    state.settings.goalMl = Number(b.dataset.goal);
+    save(); render();
+  }));
+  document.querySelectorAll("#glassChips .chip").forEach(b => b.addEventListener("click", () => {
+    state.settings.glassMl = Number(b.dataset.glass);
+    save(); render();
+  }));
+
+  ["startTime", "endTime"].forEach(id => $(id).addEventListener("change", () => {
+    let s0 = timeToMin($("startTime").value);
+    let e0 = timeToMin($("endTime").value);
+    state.settings.startMin = s0;
+    state.settings.endMin = e0;
+    if (state.settings.enabled) scheduleNext(Date.now()); else save();
+    render();
+  }));
+
+  $("vibrateToggle").addEventListener("change", e => {
+    state.settings.vibrate = e.target.checked; save();
+    if (e.target.checked && navigator.vibrate) navigator.vibrate(60);
+  });
+  $("soundToggle").addEventListener("change", e => {
+    state.settings.sound = e.target.checked; save();
+    if (e.target.checked) chime();
+  });
+
+  $("resetBtn").addEventListener("click", () => {
+    state.lastAdd = null;
+    setToday(0);
+    toast("Today's log cleared");
+  });
+
+  /* ---------------- install ---------------- */
+  let deferredPrompt = null;
+  const isStandalone = () =>
+    window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!isStandalone()) $("installCard").classList.remove("hidden");
+  });
+
+  $("installBtn").addEventListener("click", async () => {
+    if (!deferredPrompt) { toast("Use your browser menu → Add to Home Screen"); return; }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (outcome === "accepted") { $("installCard").classList.add("hidden"); toast("Installed 🎉"); }
+  });
+
+  window.addEventListener("appinstalled", () => {
+    $("installCard").classList.add("hidden");
+    toast("Installed — open it from your home screen");
+  });
+
+  function setupInstallUi() {
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    if (isStandalone()) { $("installCard").classList.add("hidden"); return; }
+    if (ios) {
+      $("installCard").classList.remove("hidden");
+      $("installBtn").classList.add("hidden");
+      $("installTitle").textContent = "Add to Home Screen";
+      $("installSub").textContent = "Tap Share ⬆️ then “Add to Home Screen” to install.";
+    } else if (!deferredPrompt) {
+      // show a soft hint even before the prompt is available
+      setTimeout(() => {
+        if (!deferredPrompt && !isStandalone()) {
+          $("installCard").classList.remove("hidden");
+          $("installTitle").textContent = "Install as an app";
+          $("installSub").textContent = "Browser menu → “Install app” / “Add to Home screen”.";
+        }
+      }, 2500);
+    }
+  }
+
+  /* ---------------- periodic background sync (best effort) ---------------- */
+  async function registerPeriodicSync() {
+    try {
+      if (!("serviceWorker" in navigator)) return;
+      const reg = await navigator.serviceWorker.ready;
+      if (!("periodicSync" in reg)) return;
+      const status = await navigator.permissions.query({ name: "periodic-background-sync" });
+      if (status.state !== "granted") return;
+      await reg.periodicSync.register("water-check", { minInterval: 15 * 60 * 1000 });
+    } catch (e) { /* unsupported, ignore */ }
+  }
+
+  /* ---------------- service worker ---------------- */
+  async function initSW() {
+    if (!("serviceWorker" in navigator)) return;
+    try {
+      const reg = await navigator.serviceWorker.register("sw.js", { scope: "./" });
+      reg.addEventListener("updatefound", () => { /* silent */ });
+    } catch (e) { /* offline-first still works from cache next visit */ }
+  }
+
+  // messages from the service worker (notification button tapped)
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", (ev) => {
+      const d = ev.data || {};
+      if (d.type === "drank") addWater(state.settings.glassMl);
+      if (d.type === "snoozed") {
+        state.settings.nextAt = Date.now() + 10 * 60000;
+        save(); armTimer(); render();
+        toast("Snoozed 10 minutes");
+      }
+      if (d.type === "schedule-synced") { /* no-op */ }
+    });
+  }
+
+  /* ---------------- boot ---------------- */
+  function boot() {
+    // deep link from a notification: ?drank=1
+    const params = new URLSearchParams(location.search);
+    if (params.get("drank") === "1") {
+      addWater(state.settings.glassMl);
+      history.replaceState({}, "", location.pathname);
+    }
+
+    // day rollover
+    const key = todayKey();
+    if (state.history[key] === undefined) { state.history[key] = state.mlToday; save(); }
+
+    // catch-up: if a reminder was missed while the app was closed, nudge once
+    const s = state.settings;
+    if (s.enabled && s.nextAt && Date.now() - s.nextAt > 60000) {
+      scheduleNext(Date.now());
+    } else if (s.enabled && s.nextAt) {
+      armTimer();
+    }
+
+    render();
+    setupInstallUi();
+    initSW();
+    registerPeriodicSync();
+    pushScheduleToSW();
+
+    // keep the countdown honest
+    setInterval(() => {
+      const s2 = state.settings;
+      if (s2.enabled && s2.nextAt) {
+        const mins = Math.max(0, Math.round((s2.nextAt - Date.now()) / 60000));
+        const cdText = $("cdText");
+        if (cdText && mins > 0) {
+          cdText.innerHTML = `Next nudge at <b>${fmtClock(s2.nextAt)}</b> · in ${mins} min`;
+        }
+      }
+    }, 15000);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      if (state.settings.enabled && state.settings.nextAt && Date.now() >= state.settings.nextAt) {
+        fireReminder();
+      }
+      render();
+    });
+
+    $("version").textContent = "v1.0.0";
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
