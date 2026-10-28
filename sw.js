@@ -1,7 +1,7 @@
 /* Drink Water Reminder — service worker
  * Offline shell cache + notification handling + best-effort background checks.
  */
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 const CACHE = "water-shell-" + VERSION;
 
 const SHELL = [
@@ -127,8 +127,8 @@ function showWaterNotification(title, body, extra) {
     renotify: true,
     data: { url: iconPath("./?drank=1") },
     actions: [
-      { action: "drank", title: "Drank it 💧" },
-      { action: "snooze", title: "Snooze 10m" }
+      { action: "drank", title: "Drank it" },
+      { action: "snooze", title: "Snooze 10 min" }
     ]
   }, extra || {}));
 }
@@ -178,7 +178,7 @@ self.addEventListener("message", (event) => {
   const d = event.data || {};
   if (d.type === "SKIP_WAITING") self.skipWaiting();
   if (d.type === "TEST_NOTIFICATION") {
-    event.waitUntil(showWaterNotification("💧 Test nudge", "This is what a water reminder looks like."));
+    event.waitUntil(showWaterNotification("Test reminder", "This is what a water reminder looks like."));
   }
 });
 
@@ -193,7 +193,7 @@ async function checkSchedule() {
   const inWindow = s.endMin <= s.startMin || (hour >= s.startMin && hour < s.endMin);
 
   if (inWindow) {
-    await showWaterNotification("💧 Drink some water", "A quick glass now keeps the streak alive.");
+    await showWaterNotification("Drink some water", "A quick glass now keeps the streak alive.");
     s.nextAt = now + Math.max(15, s.intervalMin || 60) * 60 * 1000;
   } else {
     // outside waking hours: push to the next window start

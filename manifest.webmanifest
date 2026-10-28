@@ -1,7 +1,7 @@
 {
   "name": "Drink Water Reminder",
   "short_name": "Water",
-  "description": "A calm, offline-first water reminder. Get a nudge, drink a glass, build the habit.",
+  "description": "A simple, offline water reminder. Get a nudge, drink a glass, build the habit.",
   "id": "/drink-water-reminder/",
   "start_url": "./",
   "scope": "./",
@@ -11,8 +11,8 @@
     "minimal-ui"
   ],
   "orientation": "portrait",
-  "background_color": "#0a1220",
-  "theme_color": "#0a1220",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "lang": "en",
   "dir": "ltr",
   "categories": [
