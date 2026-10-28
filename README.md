@@ -1,4 +1,4 @@
-# 💧 Water — a friendly drink water reminder
+# 💧 drink water reminder
 
 A tiny water tracker that reminds you to drink. Install it on your phone, allow notifications once,
 and it nudges you through the day while a little cartoon drop fills up as you drink.
@@ -47,14 +47,6 @@ You can also log a glass straight from the notification: tap **Drank it**, or **
 nudged again shortly.
 
 ---
-
-## What's inside
-
-- A cartoon water drop in a blue progress ring that fills up as you drink.
-- Reminders every 30 min – 2 hours, only inside the hours you choose.
-- Daily goal (1.5 – 3 L), glass size (200 – 500 ml), streak chip, 7-day chart and daily average.
-- Vibration and a soft chime, both switchable.
-- Works offline, and follows your phone's light or dark theme.
 
 ## A note on reminders
 
